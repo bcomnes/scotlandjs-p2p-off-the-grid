@@ -32,19 +32,29 @@ tools to support already-existing political organization
 
 long-term partnerships in ecuador, peru, guyana
 
+combination tech support and novel software development
+
 ---
-# guyana
+# shulinab
 
 shulinab village in wapichan territory, guyana
 
 ![x](images/internet_service.jpg)
 
 ---
-# p2p tricks
+# shulinab
+
+![x](images/nick_and_fayes.jpg)
 
 ---
+# shulinab
 
-![x](images/)
+![x](images/benab_chicken.jpg)
+
+---
+# shulinab
+
+![x](images/binab.jpg)
 
 ---
 # the tools
@@ -56,6 +66,16 @@ shulinab village in wapichan territory, guyana
 * paper notepad
 
 ---
+# satellite imagery
+
+the Amazon is very cloudy!
+
+---
+# drones
+
+![x](images/shulinab_drone_imagery.jpg)
+
+---
 # unique challenges
 
 * no electrical grid
@@ -65,10 +85,7 @@ shulinab village in wapichan territory, guyana
 ---
 # unique challenges
 
-* no electrical grid
-* unreliable internet, low cell phone coverage
-* seasonal roads
-* ALSO: every device is riddled with viruses
+every device is riddled with viruses (!!!)
 
 ---
 # power
@@ -93,17 +110,46 @@ shulinab village in wapichan territory, guyana
 ![x](images/generators.jpg)
 
 ---
-# internet
+# satellite internet: expensive, capped
 
-* satellite uplink: expensive, capped
+![x](images/satellite_internet.jpg)
 
 ---
-# putting software on phones
+# satellite internet
+
+stops working when you reach the data cap
+
+easy to use a whole month of data when there's
+an android or windows update
+
+downloading the same exact files, multiple times!
+
+---
+# internet on a good day
+
+![x](images/speed_test.jpg)
+
+---
+# internet on a typical day
+
+![x](images/ping.png)
+
+---
+# internet update
+
+```
+<gregor> They have a new modem now, which apparently is
+  working better, and I even had a skype conversation
+  with Tessa and it was clear.
+```
+
+---
+# putting software on phones, offline!
 
 ![copying tiles](images/copying_tiles.jpg)
 
 ---
-# putting software on phones
+# putting software on phones, offline!
 
 ```
 #!/bin/bash
@@ -118,7 +164,7 @@ sudo adb push ~/data/odk/forms/monitoring_v7.xml $DIR/forms/ \
 ```
 
 ---
-# putting software on phones
+# putting software on phones, offline!
 
 PROBLEM:
 
@@ -145,23 +191,44 @@ what if everyone had a copy of the map they could edit?
 * any device can show what's happening
 
 ---
+# p2p and offline: not so different!
+
+You can always (read+write) local data offline.
+
+Need to have data locally to participate in p2p.
+
+---
+# p2p tricks
+
+free your mind from the idea...
+
+that a key should map to a single value
+
+(multi-value register conflict strategy)
+
+---
 # why javascript?
 
 use the same libraries on:
 
 * web browsers
 * android phones
-* laptops
+* laptops (with electron)
 * ???
+
+database: level or level-browserify
+
+block storage: fs or indexeddb
 
 ---
 # osm-p2p-db: what
 
 p2p database implementing the OpenStreetMap schema
 
-https://github.com/digidem/osm-p2p-db
-https://github.com/digidem/osm-p2p-server
-https://github.com/digidem/osm-p2p-observations
+* https://github.com/digidem/osm-p2p
+* https://github.com/digidem/osm-p2p-db
+* https://github.com/digidem/osm-p2p-server
+* https://github.com/digidem/osm-p2p-observations
 
 ---
 # osm-p2p-db: how
@@ -176,13 +243,104 @@ materialized views sit on top of this log:
 (kappa architecture)
 
 ---
+# osm-p2p-server
+
+speaks the [OSM http API][1]
+
+so we can use tools like [ideditor](http://ideditor.com/)
+with our p2p database
+
+[1]: http://wiki.openstreetmap.org/wiki/API_v0.6
+
+---
 # osm-p2p-observations
 
-associate media with 
+associate evidence media with locations
 
-using hyperdrive
+using hyperdrive for p2p blob replication
+
+and hyperdrive-index to build materialized views
+for JPEG exif data and thumbnails
 
 ![x](images/dat.png)
+
+---
+# p2p
+
+legos bricks for offline/p2p!
+
+* hyperlog
+* hyperlog-index
+* hyperkv
+
+---
+# hyperlog
+
+append-only log (merkle DAG, like git)
+
+``` js
+var hyperlog = require('hyperlog')
+var level = require('level')
+var db = level('map.db')
+
+var log = hyperlog(db, { valueEncoding: 'json' })
+
+var msg = process.argv[2]
+var links = process.argv.slice(3)
+log.add(links, { message: msg }, function (err, node) {
+  console.log(node.key)
+})
+```
+
+---
+# hyperlog: replicate
+
+given two hyperlogs, connect them together
+with a stream and they will sync!
+
+``` js
+net.createServer(function (stream) {
+  stream.pipe(log.replicate()).pipe(stream)
+}).listen(5000)
+```
+
+``` js
+var stream = net.connect()
+stream.pipe(log.replicate()).pipe(stream)
+```
+
+---
+# hyperlog-index
+
+generate indexes (materialized views) for a hyperlog
+
+``` js
+var dex = indexer({
+  log: log,
+  db: db,
+  map: function (row, next) {
+    // write each document to another store here...
+    // then call next()
+  })
+})
+```
+
+---
+# hyperkv
+
+p2p key/value store
+
+``` js
+var kv = hyperkv({ log: log, db: db })
+
+kv.put(key, value, function (err, node) {
+  //...
+})
+
+kv.get(key, function (err, values) {
+  // values, not value
+})
+```
 
 ---
 # remote data transfer
@@ -193,10 +351,13 @@ sneakernet!
 * plug the usb drive into a mapping computer
 * take the usb drive back with you
 
-now both computers have the same data
+now both computers have the same data!
 
 ---
 # dd-map-editor
+
+application using all the aforementioned libraries,
+and sneakernet usb replication
 
 demo!
 
@@ -209,6 +370,15 @@ $ ./play.sh
 ```
 
 ---
+# more things to do...
+
+* knowing when you can delete files
+* image size replication preferences
+* a mobile app using 
+* a sealed raspberry pi to flash phones using `adb shell`
+* 
+
+---
 # links
 
 * http://mike.teczno.com/notes/guyana-trip-report.html
@@ -217,15 +387,7 @@ $ ./play.sh
 * https://github.com/digidem/osm-p2p-db/blob/master/doc/architecture.markdown
 
 ---
-# internet update
 
 ```
-19:42 < ddem-bot> <gregor> that’s true. That internet guy Deji actually went out there two 
-                  weeks ago and installed a new modem, he was in Shulinab for 3 days testing 
-                  and fixing, and kept emailing me with updates. I guess he felt the pressure!
-19:43 < ddem-bot> <gregor> They have a new modem now, which apparently is working better, and I 
-                  even had a skype conversation with Tessa and it was clear.
+__EOF__
 ```
-
----
-
